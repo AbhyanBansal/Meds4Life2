@@ -11,6 +11,7 @@ const LocationMap = dynamic(() => import("./LocationMap"), {
     loading: () => (
         <div className="h-full w-full flex items-center justify-center bg-gray-50 text-gray-400">
             <Loader2 className="w-8 h-8 animate-spin" />
+            <span className="ml-2">Loading Map...</span>
         </div>
     )
 });
@@ -127,7 +128,7 @@ export default function LocationPicker() {
                 ) : (
                     <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 p-6 text-center">
                         <MapPin className="w-12 h-12 mb-3 text-gray-300" />
-                        <p className="text-sm font-medium">Search for an address or use your current location to pin the medicine's location on the map.</p>
+                        <p className="text-sm font-medium">Search for an address or use your current location to pin the medicine&apos;s location on the map.</p>
                     </div>
                 )}
             </div>

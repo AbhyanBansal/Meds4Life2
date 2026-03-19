@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 import Searchbar from "@/components/dashboard/locate/Searchbar";
 import { searchListings } from "./actions";
-import { Pill, MapPin, Loader2, ArrowRight } from "lucide-react";
+import { Pill, MapPin, Loader2 } from "lucide-react";
 import Link from "next/link";
 
 // Dynamic import for Map to avoid SSR issues with Leaflet
@@ -20,6 +20,7 @@ interface Listing {
     id: string;
     title: string;
     description: string | null;
+    status: "AVAILABLE" | "RESERVED" | "COLLECTED" | "EXPIRED" | null;
     latitude: number | null;
     longitude: number | null;
     images: string[] | null;
@@ -61,7 +62,7 @@ export default function LocatePage() {
     }, []);
 
     return (
-        <div className="h-[calc(100vh-64px)] flex flex-col p-4 md:p-6 gap-6 overflow-hidden">
+        <div className="flex min-h-[calc(100dvh-10rem)] flex-col gap-6 p-4 md:p-6">
             <div className="flex flex-col gap-2">
                 <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
                     <MapPin className="w-6 h-6 text-emerald-600" />
@@ -74,9 +75,9 @@ export default function LocatePage() {
                 <Searchbar onSearch={handleSearch} className="w-full" isLoading={isLoading} />
             </div>
 
-            <div className="flex-1 flex flex-col md:flex-row gap-6 min-h-0">
+            <div className="grid flex-1 min-h-0 grid-cols-1 gap-6 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]">
                 {/* Results List - Scrollable */}
-                <div className="flex-1 md:max-w-md flex flex-col gap-4 overflow-y-auto pr-2 pb-2 relative">
+                <div className="relative flex flex-col gap-4 pb-2 pr-2 lg:max-h-[calc(100dvh-15rem)] lg:overflow-y-auto">
                     {/* Show loader only if we have NO listings, or overlay if we do */}
                     {isLoading && listings.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 text-gray-500 gap-3">
@@ -120,6 +121,17 @@ export default function LocatePage() {
                                                 {listing.packagingType && (
                                                     <span className="flex items-center gap-1 bg-gray-50 px-1.5 py-0.5 rounded truncate max-w-[100px]">
                                                         {listing.packagingType}
+                                                    </span>
+                                                )}
+                                                {listing.status && (
+                                                    <span
+                                                        className={`flex items-center gap-1 px-1.5 py-0.5 rounded ${
+                                                            listing.status === "RESERVED"
+                                                                ? "bg-blue-50 text-blue-600"
+                                                                : "bg-emerald-50 text-emerald-600"
+                                                        }`}
+                                                    >
+                                                        {listing.status}
                                                     </span>
                                                 )}
                                                 {listing.expiryDate && (
@@ -173,7 +185,7 @@ export default function LocatePage() {
                 </div>
 
                 {/* Map View */}
-                <div className="flex-1 rounded-xl overflow-hidden border border-gray-200 shadow-sm bg-gray-100 min-h-[300px]">
+                <div className="min-h-[320px] rounded-xl overflow-hidden border border-gray-200 bg-gray-100 shadow-sm lg:min-h-0">
                     <ListingsMap listings={listings} />
                 </div>
             </div>

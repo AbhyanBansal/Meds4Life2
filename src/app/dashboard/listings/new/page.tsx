@@ -1,7 +1,7 @@
 "use client";
 
 import { createListing, State } from "./actions";
-import { Upload, Calendar, Package, Type, FileText, X, ChevronDown, Check, Trash2, ImageIcon, Plus, ArrowRight, AlertTriangle } from "lucide-react";
+import { Calendar, Package, Type, FileText, X, ChevronDown, Check, Trash2, ImageIcon, Plus, ArrowRight, AlertTriangle } from "lucide-react";
 import LocationPicker from "@/components/dashboard/LocationPicker";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
@@ -121,12 +121,11 @@ function CustomSelect({ name, options, placeholder = "Select...", value, error }
 interface ImageUploaderProps {
     name: string;
     error?: string;
-    onReset?: () => void;
     preview?: string | null; // Controlled preview state
     setPreview?: (val: string | null) => void;
 }
 
-function ImageUploader({ name, error, onReset, preview, setPreview }: ImageUploaderProps) {
+function ImageUploader({ name, error, preview, setPreview }: ImageUploaderProps) {
     const inputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

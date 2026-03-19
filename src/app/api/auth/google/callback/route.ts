@@ -1,8 +1,12 @@
 import { db } from "@/db";
 import { users } from "@/db/schema";
-import { createSession } from "@/lib/auth";
+import {
+    createSessionForUser,
+    getPostAuthRedirect,
+} from "@/lib/auth";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -42,31 +46,45 @@ export async function GET(req: NextRequest) {
             return redirect("/login?error=Google_email_not_found");
         }
 
-        let dbUser = await db.query.users.findFirst({
-            where: eq(users.email, googleUser.email)
+        const dbUser = await db.query.users.findFirst({
+            where: eq(users.email, googleUser.email),
+            with: {
+                organization: {
+                    columns: {
+                        status: true,
+                    },
+                },
+            },
         });
 
         if (!dbUser) {
-            // Create new user
-            const [newUser] = await db.insert(users).values({
-                email: googleUser.email,
-                name: googleUser.name,
-                avatar: googleUser.picture,
-                googleId: googleUser.id,
-            }).returning();
-            dbUser = newUser;
-        } else {
-            // Update Google ID and Avatar for existing user
-            await db.update(users).set({
-                googleId: googleUser.id,
-                avatar: googleUser.picture || dbUser.avatar
-            }).where(eq(users.id, dbUser.id));
+            return redirect("/login?error=google_account_not_linked");
         }
 
-        await createSession({ userId: dbUser.id });
+        if (dbUser.role !== "SUPER_ADMIN" && !dbUser.organizationId) {
+            return redirect("/login?error=google_account_incomplete");
+        }
 
-        return redirect("/dashboard");
+        if (dbUser.status === "REJECTED") {
+            return redirect("/login?error=account_rejected");
+        }
+
+        if (dbUser.role !== "SUPER_ADMIN" && dbUser.organization?.status === "REJECTED") {
+            return redirect("/login?error=organization_rejected");
+        }
+
+        await db.update(users).set({
+            googleId: googleUser.id,
+            avatar: googleUser.picture || dbUser.avatar,
+        }).where(eq(users.id, dbUser.id));
+
+        const session = await createSessionForUser(dbUser);
+        return redirect(getPostAuthRedirect(session));
     } catch (error) {
+        if (isRedirectError(error)) {
+            throw error;
+        }
+
         console.error("Google Auth Exception:", error);
         return redirect("/login?error=Google_auth_exception");
     }

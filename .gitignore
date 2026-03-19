@@ -45,3 +45,5 @@ next-env.d.ts
 # logs
 error.log
 build_log.txt
+dev_error.log
+my_build_log.txt

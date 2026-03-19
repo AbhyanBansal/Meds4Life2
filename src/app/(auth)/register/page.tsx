@@ -1,123 +1,214 @@
 'use client'
 
 import Link from "next/link";
-import { useActionState } from "react";
-import { signup } from "./actions";
-import { Loader2 } from "lucide-react";
+import { useActionState, useState, useEffect } from "react";
+import { signup, type SignupState } from "./actions";
+import { Loader2, ArrowRight, ArrowLeft, Building2, User } from "lucide-react";
 
 export default function RegisterPage() {
-    const [state, action, isPending] = useActionState(signup, undefined);
+    const [state, action, isPending] = useActionState<SignupState, FormData>(signup, undefined);
+    const [step, setStep] = useState(1);
+    const [orgMode, setOrgMode] = useState<'create' | 'join'>('join');
+    const [orgs, setOrgs] = useState<{ id: string; name: string }[]>([]);
+
+    // Form fields state for client-side validation/control
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        password: '',
+        orgName: '',
+        orgId: ''
+    });
+
+    useEffect(() => {
+        if (step === 2 && orgMode === 'join') {
+            fetch('/api/organizations')
+                .then(res => res.json())
+                .then(data => setOrgs(data))
+                .catch(err => console.error("Failed to fetch orgs", err));
+        }
+    }, [step, orgMode]);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    };
+
+    const nextStep = () => {
+        if (formData.name && formData.email && formData.password) {
+            setStep(2);
+        }
+    };
 
     return (
-        <div className="glass-card rounded-2xl p-8 shadow-xl border-white/60">
+        <div className="glass-card rounded-2xl p-8 shadow-xl border-white/60 min-h-[500px] flex flex-col justify-center">
             <div className="mb-8 text-center flex flex-col items-center">
                 <div className="mb-4 bg-gradient-to-br from-emerald-50 to-emerald-100/50 p-3 rounded-xl border border-emerald-100/50 shadow-sm inline-block">
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-8 h-8 text-emerald-600"
-                    >
-                        <path d="M5 12h14" />
-                        <path d="M12 5v14" />
-                    </svg>
+                    {step === 1 ? (
+                        <User className="w-8 h-8 text-emerald-600" />
+                    ) : (
+                        <Building2 className="w-8 h-8 text-emerald-600" />
+                    )}
                 </div>
-                <h1 className="text-2xl font-bold text-gray-800">Create Account</h1>
-                <p className="text-sm text-gray-500 mt-2">Join the community today</p>
+                <h1 className="text-2xl font-bold text-gray-800">
+                    {step === 1 ? "Create Account" : "Join Organization"}
+                </h1>
+                <p className="text-sm text-gray-500 mt-2">
+                    {step === 1 ? "Step 1: Your Details" : "Step 2: Organization"}
+                </p>
             </div>
 
             <form action={action} className="space-y-5">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
-                    <input
-                        name="name"
-                        type="text"
-                        placeholder="John Doe"
-                        disabled={isPending}
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-white/50 disabled:opacity-50"
-                    />
-                    {state?.errors?.name && <p className="text-red-500 text-xs mt-1 ml-1">{state.errors.name[0]}</p>}
+                {/* Hidden Inputs to ensure all data is submitted */}
+                {/* Hidden Input for orgMode state (needed as it's not a standard input) */}
+                <input type="hidden" name="orgMode" value={orgMode} />
+
+                {/* Step 1: User Details */}
+                <div className={step === 1 ? "block space-y-5" : "hidden"}>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
+                        <input
+                            value={formData.name}
+                            onChange={handleInputChange}
+                            name="name"
+                            type="text"
+                            placeholder="John Doe"
+                            disabled={isPending}
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-white/50 disabled:opacity-50"
+                        />
+                        {state?.errors?.name && <p className="text-red-500 text-xs mt-1 ml-1">{state.errors.name[0]}</p>}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+                        <input
+                            value={formData.email}
+                            onChange={handleInputChange}
+                            name="email"
+                            type="email"
+                            placeholder="you@example.com"
+                            disabled={isPending}
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-white/50 disabled:opacity-50"
+                        />
+                        {state?.errors?.email && <p className="text-red-500 text-xs mt-1 ml-1">{state.errors.email[0]}</p>}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+                        <input
+                            value={formData.password}
+                            onChange={handleInputChange}
+                            name="password"
+                            type="password"
+                            placeholder="••••••••"
+                            disabled={isPending}
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-white/50 disabled:opacity-50"
+                        />
+                        {state?.errors?.password && <p className="text-red-500 text-xs mt-1 ml-1">{state.errors.password[0]}</p>}
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={nextStep}
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 rounded-xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95 flex items-center justify-center gap-2"
+                    >
+                        Next <ArrowRight className="w-4 h-4" />
+                    </button>
                 </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
-                    <input
-                        name="email"
-                        type="email"
-                        placeholder="you@example.com"
-                        disabled={isPending}
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-white/50 disabled:opacity-50"
-                    />
-                    {state?.errors?.email && <p className="text-red-500 text-xs mt-1 ml-1">{state.errors.email[0]}</p>}
-                </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
-                    <input
-                        name="password"
-                        type="password"
-                        placeholder="••••••••"
-                        disabled={isPending}
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-white/50 disabled:opacity-50"
-                    />
-                    {state?.errors?.password && <p className="text-red-500 text-xs mt-1 ml-1">{state.errors.password[0]}</p>}
-                </div>
+                {/* General/Network Errors */}
+                {state?.errors?.email && state.errors.email.map((error: string, i: number) => {
+                    // Check if it's a generic error (not really an email error, but passed as one)
+                    if (!error.toLowerCase().includes('email') && !error.toLowerCase().includes('valid')) {
+                        return (
+                            <div key={i} className="bg-red-50 text-red-600 p-3 rounded-xl text-sm mb-4 border border-red-100 flex items-center gap-2">
+                                <span className="font-bold">Error:</span> {error}
+                            </div>
+                        );
+                    }
+                    return null;
+                })}
 
-                <button
-                    type="submit"
-                    disabled={isPending}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 rounded-xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                    {isPending ? (
-                        <>
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            Creating Account...
-                        </>
+                <div className={step === 2 ? "block space-y-5" : "hidden"}>
+                    <div className="flex gap-4 mb-4">
+                        <button
+                            type="button"
+                            onClick={() => setOrgMode('join')}
+                            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${orgMode === 'join'
+                                ? 'bg-emerald-100 text-emerald-800 border-emerald-200 border'
+                                : 'bg-gray-50 text-gray-600 border border-transparent hover:bg-gray-100'
+                                }`}
+                        >
+                            Join Existing
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setOrgMode('create')}
+                            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${orgMode === 'create'
+                                ? 'bg-emerald-100 text-emerald-800 border-emerald-200 border'
+                                : 'bg-gray-50 text-gray-600 border border-transparent hover:bg-gray-100'
+                                }`}
+                        >
+                            Create New
+                        </button>
+                    </div>
+
+                    {orgMode === 'create' ? (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Organization Name</label>
+                            <input
+                                name="orgName"
+                                value={formData.orgName}
+                                onChange={handleInputChange}
+                                type="text"
+                                placeholder="My Awesome Org"
+                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-white/50 disabled:opacity-50"
+                            />
+                            {state?.errors?.orgName && <p className="text-red-500 text-xs mt-1 ml-1">{state.errors.orgName[0]}</p>}
+                        </div>
                     ) : (
-                        "Sign Up"
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Select Organization</label>
+                            <select
+                                name="orgId"
+                                value={formData.orgId}
+                                onChange={handleInputChange}
+                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-white/50 disabled:opacity-50 appearance-none"
+                            >
+                                <option value="">Select an organization...</option>
+                                {orgs.map(org => (
+                                    <option key={org.id} value={org.id}>{org.name}</option>
+                                ))}
+                            </select>
+                            {state?.errors?.orgId && <p className="text-red-500 text-xs mt-1 ml-1">{state.errors.orgId[0]}</p>}
+                        </div>
                     )}
-                </button>
-            </form>
 
-            <div className="mt-8">
-                <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-200"></div>
-                    </div>
-                    <div className="relative flex justify-center text-sm">
-                        <span className="px-4 bg-white/50 backdrop-blur-sm text-gray-500 rounded-full">Or continue with</span>
+                    <div className="flex gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setStep(1)}
+                            className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 rounded-xl transition-all flex items-center justify-center gap-2"
+                        >
+                            <ArrowLeft className="w-4 h-4" /> Back
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={isPending}
+                            className="flex-[2] bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 rounded-xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                            {isPending ? (
+                                <>
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                    Creating...
+                                </>
+                            ) : (
+                                "Sign Up"
+                            )}
+                        </button>
                     </div>
                 </div>
-
-                <a
-                    href="/api/auth/google"
-                    className="mt-6 w-full flex items-center justify-center gap-3 bg-white border border-gray-200 text-gray-700 font-medium py-3 rounded-xl hover:bg-gray-50 transition-all hover:shadow-sm"
-                >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24">
-                        <path
-                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                            fill="#4285F4"
-                        />
-                        <path
-                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                            fill="#34A853"
-                        />
-                        <path
-                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                            fill="#FBBC05"
-                        />
-                        <path
-                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                            fill="#EA4335"
-                        />
-                    </svg>
-                    Google
-                </a>
-            </div>
+            </form>
 
             <div className="mt-8 text-center text-sm text-gray-500">
                 Already have an account?{" "}

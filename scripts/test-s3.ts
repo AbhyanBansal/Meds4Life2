@@ -26,9 +26,14 @@ async function checkS3() {
         const data = await client.send(new ListBucketsCommand({}));
         console.log("Success! Buckets found:");
         data.Buckets?.forEach(b => console.log(` - ${b.Name}`));
-    } catch (err: any) {
+    } catch (err) {
         console.error("Error connecting to S3:");
-        console.error(err.name, err.message);
+        if (err instanceof Error) {
+            console.error(err.name, err.message);
+            return;
+        }
+
+        console.error(err);
     }
 }
 

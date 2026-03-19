@@ -2,9 +2,14 @@
 
 import { db } from "@/db";
 import { users } from "@/db/schema";
-import { createSession, verifyPassword } from "@/lib/auth";
+import {
+    createSessionForUser,
+    getPostAuthRedirect,
+    verifyPassword,
+} from "@/lib/auth";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { z } from "zod";
 
 const loginSchema = z.object({
@@ -12,7 +17,15 @@ const loginSchema = z.object({
     password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
-export async function login(prevState: any, formData: FormData) {
+export type LoginState = {
+    errors?: {
+        email?: string[];
+        password?: string[];
+    };
+    message?: string;
+} | undefined;
+
+export async function login(prevState: LoginState, formData: FormData): Promise<LoginState> {
     const result = loginSchema.safeParse(Object.fromEntries(formData));
 
     if (!result.success) {
@@ -21,21 +34,62 @@ export async function login(prevState: any, formData: FormData) {
         };
     }
 
-    const { email, password } = result.data;
+    try {
+        const user = await db.query.users.findFirst({
+            where: eq(users.email, result.data.email),
+            with: {
+                organization: {
+                    columns: {
+                        status: true,
+                    },
+                },
+            },
+        });
 
-    const user = await db.query.users.findFirst({
-        where: eq(users.email, email),
-    });
+        if (!user?.password || !(await verifyPassword(result.data.password, user.password))) {
+            return {
+                errors: {
+                    email: ["Invalid credentials"],
+                },
+            };
+        }
 
-    if (!user || !user.password || !(await verifyPassword(password, user.password))) {
+        if (user.role !== 'SUPER_ADMIN' && !user.organizationId) {
+            return {
+                errors: {
+                    email: ["User setup is incomplete. Please contact support."],
+                },
+            };
+        }
+
+        if (user.status === 'REJECTED') {
+            return {
+                errors: {
+                    email: ["Your account request was rejected by the organization admin."],
+                },
+            };
+        }
+
+        if (user.role !== 'SUPER_ADMIN' && user.organization?.status === 'REJECTED') {
+            return {
+                errors: {
+                    email: ["Your organization signup was rejected by the super admin."],
+                },
+            };
+        }
+
+        const session = await createSessionForUser(user);
+
+        redirect(getPostAuthRedirect(session));
+    } catch (error) {
+        if (isRedirectError(error)) {
+            throw error;
+        }
+
         return {
             errors: {
-                email: ["Invalid email or password"],
+                email: [error instanceof Error ? error.message : "Invalid credentials"],
             },
         };
     }
-
-    await createSession({ userId: user.id });
-
-    redirect("/dashboard");
 }

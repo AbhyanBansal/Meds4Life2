@@ -1,8 +1,7 @@
 "use client";
 
 import { Search } from "lucide-react";
-import { useEffect, useState, useTransition } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function Searchbar({
     className,
@@ -14,7 +13,6 @@ export default function Searchbar({
     isLoading?: boolean
 }) {
     const [query, setQuery] = useState("");
-    const [isPending, startTransition] = useTransition();
 
     // Simple debounce implementation inside component to avoid dependency on missing lib
     useEffect(() => {
@@ -39,7 +37,7 @@ export default function Searchbar({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
             />
-            {(isPending || isLoading) && (
+            {isLoading && (
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-emerald-500"></div>
                 </div>

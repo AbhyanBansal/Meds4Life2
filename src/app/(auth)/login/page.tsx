@@ -1,19 +1,33 @@
 'use client'
 
 import Link from "next/link";
-import { useActionState } from "react";
-import { login } from "./actions";
+import { Suspense, useActionState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
-export default function LoginPage() {
-    const [state, action, isPending] = useActionState(login, undefined);
+import { login, LoginState } from "./actions";
+
+function LoginForm() {
+    const [state, action, isPending] = useActionState<LoginState, FormData>(login, undefined);
+    const searchParams = useSearchParams();
+    const errorCode = searchParams.get("error");
+
+    const authErrorMessage = {
+        account_rejected: "Your account request was rejected by the organization admin.",
+        organization_rejected: "Your organization signup was rejected by the super admin.",
+        google_account_not_linked: "This Google account is not linked to a MediShare account yet.",
+        google_account_incomplete: "Finish account setup with email sign-in before using Google.",
+        session_refresh_required: "Please sign in again to refresh your session.",
+        Google_auth_exception: "Google sign-in failed. Please try again.",
+        Google_auth_failed_no_code: "Google sign-in did not return an authorization code.",
+        Google_auth_failed_token: "Google sign-in could not exchange the authorization code.",
+        Google_email_not_found: "Google did not provide an email address for this account.",
+    }[errorCode ?? ""];
 
     return (
-        <div className="glass-card rounded-2xl p-8 shadow-xl border-white/60">
-            <div className="mb-8 text-center flex flex-col items-center">
-                <div className="mb-4 bg-gradient-to-br from-emerald-50 to-emerald-100/50 p-3 rounded-xl border border-emerald-100/50 shadow-sm inline-block">
-                    {/* Replaced Plus with separate import if needed, but for now assuming Plus is not imported, let's use the one from branding or just text if icon missing. 
-                        Wait, need to import Plus from lucide-react first. */}
+        <div className="glass-card rounded-2xl border-white/60 p-8 shadow-xl">
+            <div className="mb-8 flex flex-col items-center text-center">
+                <div className="mb-4 inline-block rounded-xl border border-emerald-100/50 bg-gradient-to-br from-emerald-50 to-emerald-100/50 p-3 shadow-sm">
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"
@@ -22,49 +36,55 @@ export default function LoginPage() {
                         strokeWidth="2"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        className="w-8 h-8 text-emerald-600"
+                        className="h-8 w-8 text-emerald-600"
                     >
                         <path d="M5 12h14" />
                         <path d="M12 5v14" />
                     </svg>
                 </div>
                 <h1 className="text-2xl font-bold text-gray-800">Welcome Back</h1>
-                <p className="text-sm text-gray-500 mt-2">Sign in to continue sharing</p>
+                <p className="mt-2 text-sm text-gray-500">Sign in to continue sharing</p>
             </div>
+
+            {authErrorMessage ? (
+                <div className="mb-5 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    {authErrorMessage}
+                </div>
+            ) : null}
 
             <form action={action} className="space-y-5">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+                    <label className="mb-1.5 block text-sm font-medium text-gray-700">Email</label>
                     <input
                         name="email"
                         type="email"
                         placeholder="you@example.com"
                         disabled={isPending}
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-white/50 disabled:opacity-50"
+                        className="w-full rounded-xl border border-gray-200 bg-white/50 px-4 py-2.5 transition-all focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:opacity-50"
                     />
-                    {state?.errors?.email && <p className="text-red-500 text-xs mt-1 ml-1">{state.errors.email[0]}</p>}
+                    {state?.errors?.email ? <p className="ml-1 mt-1 text-xs text-red-500">{state.errors.email[0]}</p> : null}
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+                    <label className="mb-1.5 block text-sm font-medium text-gray-700">Password</label>
                     <input
                         name="password"
                         type="password"
-                        placeholder="••••••••"
+                        placeholder="********"
                         disabled={isPending}
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-white/50 disabled:opacity-50"
+                        className="w-full rounded-xl border border-gray-200 bg-white/50 px-4 py-2.5 transition-all focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:opacity-50"
                     />
-                    {state?.errors?.password && <p className="text-red-500 text-xs mt-1 ml-1">{state.errors.password[0]}</p>}
+                    {state?.errors?.password ? <p className="ml-1 mt-1 text-xs text-red-500">{state.errors.password[0]}</p> : null}
                 </div>
 
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 rounded-xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 font-medium text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-700 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70"
                 >
                     {isPending ? (
                         <>
-                            <Loader2 className="w-5 h-5 animate-spin" />
+                            <Loader2 className="h-5 w-5 animate-spin" />
                             Signing in...
                         </>
                     ) : (
@@ -79,15 +99,15 @@ export default function LoginPage() {
                         <div className="w-full border-t border-gray-200"></div>
                     </div>
                     <div className="relative flex justify-center text-sm">
-                        <span className="px-4 bg-white/50 backdrop-blur-sm text-gray-500 rounded-full">Or continue with</span>
+                        <span className="rounded-full bg-white/50 px-4 text-gray-500 backdrop-blur-sm">Or continue with</span>
                     </div>
                 </div>
 
                 <a
                     href="/api/auth/google"
-                    className="mt-6 w-full flex items-center justify-center gap-3 bg-white border border-gray-200 text-gray-700 font-medium py-3 rounded-xl hover:bg-gray-50 transition-all hover:shadow-sm"
+                    className="mt-6 flex w-full items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white py-3 font-medium text-gray-700 transition-all hover:bg-gray-50 hover:shadow-sm"
                 >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24">
+                    <svg className="h-5 w-5" viewBox="0 0 24 24">
                         <path
                             d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                             fill="#4285F4"
@@ -111,10 +131,28 @@ export default function LoginPage() {
 
             <div className="mt-8 text-center text-sm text-gray-500">
                 Don&apos;t have an account?{" "}
-                <Link href="/register" className="text-emerald-600 hover:text-emerald-700 font-medium hover:underline">
+                <Link href="/register" className="font-medium text-emerald-600 hover:text-emerald-700 hover:underline">
                     Sign up
                 </Link>
             </div>
         </div>
+    );
+}
+
+function LoginFallback() {
+    return (
+        <div className="glass-card rounded-2xl border-white/60 p-8 shadow-xl">
+            <div className="flex items-center justify-center py-12 text-gray-500">
+                <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+        </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<LoginFallback />}>
+            <LoginForm />
+        </Suspense>
     );
 }

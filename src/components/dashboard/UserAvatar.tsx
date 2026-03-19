@@ -22,6 +22,7 @@ export default function UserAvatar({ user }: UserAvatarProps) {
 
     if (user.avatar && !imageError) {
         return (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
                 src={user.avatar}
                 alt={user.name || "User"}

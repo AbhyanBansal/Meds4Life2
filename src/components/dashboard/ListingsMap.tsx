@@ -3,8 +3,8 @@
 import { useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import "leaflet-defaulticon-compatibility";
-import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
+// import "leaflet-defaulticon-compatibility";
+// import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
 import L from "leaflet";
 import Link from "next/link";
 import { ArrowRight, Package } from "lucide-react";
@@ -40,6 +40,17 @@ function MapController({ listings }: { listings: Listing[] }) {
 
 export default function ListingsMap({ listings }: ListingsMapProps) {
     const defaultCenter = { lat: 20.5937, lng: 78.9629 }; // India default
+
+    useEffect(() => {
+        // Fix Leaflet's default icon path issues with Next.js/Turbopack
+        // This must run inside useEffect to ensure window is defined
+        delete (L.Icon.Default.prototype as { _getIconUrl?: unknown })._getIconUrl;
+        L.Icon.Default.mergeOptions({
+            iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+            iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+        });
+    }, []);
 
     // Filter valid listings just in case
     const validListings = listings.filter(l => l.latitude && l.longitude);

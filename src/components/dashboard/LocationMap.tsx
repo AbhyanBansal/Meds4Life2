@@ -3,8 +3,8 @@
 import { useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import "leaflet-defaulticon-compatibility";
-import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
+// import "leaflet-defaulticon-compatibility";
+// import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
 import L from "leaflet";
 
 interface LocationMapProps {
@@ -51,6 +51,18 @@ function LocationMarker({ position, onLocationSelect }: { position: { lat: numbe
 export default function LocationMap({ latitude, longitude, onLocationSelect }: LocationMapProps) {
     const defaultCenter = { lat: 20.5937, lng: 78.9629 }; // Fallback to India center or user's preference
     const center = (latitude && longitude) ? { lat: latitude, lng: longitude } : defaultCenter;
+
+    useEffect(() => {
+        // Fix Leaflet's default icon path issues with Next.js/Turbopack
+        if (typeof window !== 'undefined') {
+            delete (L.Icon.Default.prototype as { _getIconUrl?: unknown })._getIconUrl;
+            L.Icon.Default.mergeOptions({
+                iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+                iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+            });
+        }
+    }, []);
 
     return (
         <MapContainer

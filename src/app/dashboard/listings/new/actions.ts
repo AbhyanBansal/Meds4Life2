@@ -2,8 +2,10 @@
 
 import { getSession } from "@/lib/auth";
 import { db } from "@/db";
-import { listings } from "@/db/schema";
+import { listings, users } from "@/db/schema";
 import { uploadFileToS3 } from "@/lib/s3";
+import { eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 const listingSchema = z.object({
@@ -121,6 +123,19 @@ export async function createListing(prevState: State, formData: FormData): Promi
 
     const { title, description, quantity, saltName, strength, packagingType, latitude, longitude } = validatedFields.data; // expiryDate is already parsed above
 
+    // Fetch User to get Organization ID
+    const user = await db.query.users.findFirst({
+        where: eq(users.id, userId),
+        columns: { organizationId: true }
+    });
+
+    if (!user || !user.organizationId) {
+        return {
+            message: "You must belong to an organization to create listings.",
+            success: false,
+        };
+    }
+
     let newListingId: string;
 
     try {
@@ -134,6 +149,7 @@ export async function createListing(prevState: State, formData: FormData): Promi
             packagingType,
             images: imageKeys,
             ownerId: userId,
+            organizationId: user.organizationId,
             status: "AVAILABLE",
             latitude: latitude ? parseFloat(latitude) : null,
             longitude: longitude ? parseFloat(longitude) : null,
@@ -154,8 +170,8 @@ export async function createListing(prevState: State, formData: FormData): Promi
         };
     }
 
-    // Revalidate path if needed, or let client handle reset
-    // revalidatePath('/dashboard');
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/listings");
 
     return {
         message: "Listing created successfully!",

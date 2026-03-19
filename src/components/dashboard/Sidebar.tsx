@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Pill, GitPullRequest, UserCircle, Plus, MapPin, LogOut } from "lucide-react";
+import { LayoutDashboard, Pill, GitPullRequest, UserCircle, Plus, MapPin, LogOut, Shield } from "lucide-react";
 import UserAvatar from "./UserAvatar";
 
 interface User {
@@ -9,9 +9,10 @@ interface User {
     name: string | null;
     email: string;
     avatar: string | null;
+    role?: "ORG_ADMIN" | "MEMBER" | "SUPER_ADMIN" | null;
 }
 
-const navigation = [
+const baseNavigation = [
     { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
     { name: "Locate", href: "/dashboard/locate", icon: MapPin, mobileOnly: true },
     { name: "New", href: "/dashboard/listings/new", icon: Plus, mobileOnly: true },
@@ -22,6 +23,14 @@ const navigation = [
 
 export default function Sidebar({ user }: { user?: User | null }) {
     const pathname = usePathname();
+
+    const navigation = [...baseNavigation];
+    if (user?.role === 'ORG_ADMIN') {
+        navigation.push({ name: "Admin", href: "/dashboard/admin", icon: Shield });
+    }
+    if (user?.role === 'SUPER_ADMIN') {
+        navigation.push({ name: "Super Admin", href: "/dashboard/super-admin", icon: Shield });
+    }
 
     return (
         <>
@@ -92,7 +101,7 @@ export default function Sidebar({ user }: { user?: User | null }) {
             </div>
 
             {/* Mobile Header (Fixed Top) */}
-            <div className="md:hidden fixed top-0 left-0 right-0 z-50 px-4 py-3 bg-white/80 backdrop-blur-xl border-b border-emerald-100 flex items-center justify-between shadow-sm">
+            <div className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between border-b border-emerald-100 bg-white/80 px-4 pb-3 pt-[calc(0.75rem+var(--safe-top))] shadow-sm backdrop-blur-xl">
                 <div className="flex items-center gap-2">
                     <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 p-1.5 rounded-lg border border-emerald-100/50">
                         <Plus className="w-4 h-4 text-emerald-600" />
@@ -107,7 +116,7 @@ export default function Sidebar({ user }: { user?: User | null }) {
             </div>
 
             {/* Mobile Bottom Navigation (Fixed Bottom) */}
-            <div className="md:hidden fixed bottom-6 left-4 right-4 z-50">
+            <div className="md:hidden fixed left-4 right-4 z-50 bottom-[calc(1rem+var(--safe-bottom))]">
                 <div className="border border-emerald-500 shadow-xl shadow-emerald-900/20 rounded-2xl p-2 bg-emerald-600 backdrop-blur-xl">
                     <div className="grid grid-cols-6 gap-1">
                         {navigation.map((item) => {
