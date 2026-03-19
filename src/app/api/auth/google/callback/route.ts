@@ -11,6 +11,9 @@ import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
     const code = req.nextUrl.searchParams.get("code");
+    const redirectUri =
+        process.env.GOOGLE_REDIRECT_URI ||
+        new URL("/api/auth/google/callback", req.url).toString();
 
     if (!code) {
         return redirect("/login?error=Google_auth_failed_no_code");
@@ -24,7 +27,7 @@ export async function GET(req: NextRequest) {
                 code,
                 client_id: process.env.GOOGLE_CLIENT_ID!,
                 client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-                redirect_uri: process.env.GOOGLE_REDIRECT_URI || "http://localhost:3000/api/auth/google/callback",
+                redirect_uri: redirectUri,
                 grant_type: "authorization_code",
             }),
         });

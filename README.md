@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # MediShare Frontend
 
 This is the active MediShare application.
@@ -38,3 +39,6 @@ npm start
 ```
 
 Deployment notes live in [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md).
+=======
+# Meds4Life2
+>>>>>>> 67dac1168e883d284d9fa0c5df7649a97af0f7d7

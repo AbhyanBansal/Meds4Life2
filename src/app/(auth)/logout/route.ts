@@ -1,12 +1,17 @@
 import { deleteSession } from "@/lib/auth";
+import { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-export async function GET() {
-    await deleteSession();
-    return NextResponse.redirect(new URL("/", process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"));
+function getAppRoot(req: NextRequest) {
+    return process.env.NEXT_PUBLIC_APP_URL || new URL("/", req.url).toString();
 }
 
-export async function POST() {
+export async function GET(req: NextRequest) {
     await deleteSession();
-    return NextResponse.redirect(new URL("/", process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"));
+    return NextResponse.redirect(new URL(getAppRoot(req)));
+}
+
+export async function POST(req: NextRequest) {
+    await deleteSession();
+    return NextResponse.redirect(new URL(getAppRoot(req)));
 }
