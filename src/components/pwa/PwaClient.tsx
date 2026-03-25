@@ -82,7 +82,7 @@ export default function PwaClient() {
         <button
             type="button"
             onClick={handleInstall}
-            className="fixed bottom-[calc(6.5rem+var(--safe-bottom))] right-4 z-[60] inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-3 text-sm font-medium text-white shadow-xl shadow-emerald-500/30 transition-colors hover:bg-emerald-500 md:bottom-6"
+            className="install-app-button z-[60] inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-4 py-3 text-sm font-medium text-white shadow-xl shadow-emerald-500/30 transition-all hover:bg-emerald-500"
         >
             <Download className="h-4 w-4" />
             Install App

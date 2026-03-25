@@ -71,6 +71,32 @@ body {
   background-size: 200%;
 }
 
+.install-app-button {
+  position: fixed;
+  right: calc(1rem + var(--safe-right));
+  bottom: calc(1rem + var(--safe-bottom));
+  left: auto;
+  transform: none;
+  width: auto;
+  max-width: calc(100vw - 2rem - var(--safe-left) - var(--safe-right));
+  padding-inline: 1rem;
+}
+
+@media (min-width: 768px) {
+  .install-app-button {
+    right: calc(1.5rem + var(--safe-right));
+    bottom: calc(1.5rem + var(--safe-bottom));
+    padding-inline: 1rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .install-app-button {
+    right: calc(2rem + var(--safe-right));
+    bottom: calc(2rem + var(--safe-bottom));
+  }
+}
+
 @keyframes gradient {
   0% {
     background-position: 0% 50%;
